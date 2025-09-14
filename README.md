@@ -297,9 +297,7 @@
 
             <!-- Brand Story Footer -->
             <footer id="brand-story" class="text-center py-12 hero-bg rounded-3xl shadow-inner">
-                <h2 class="text-4xl font-black mb-4 text-primary">
-                    
-                </h2>
+                <img src="https://placehold.co/1500x800/FFDAB9/5C3D2E?text=Happy+Pets" alt="반려동물 이미지" class="mx-auto mb-4 w-full h-auto rounded-xl">
                 <h2 class="text-4xl font-black mb-4 text-primary">
                     반려동물과 함께 만드는, 더 나은 내일
                 </h2>
@@ -316,7 +314,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the environment
+        // 환경 변수에서 제공되는 전역 변수들
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -342,7 +340,7 @@
         let selectedTimeSlot = null;
         const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-        // Initialize Firebase and set up authentication
+        // Firebase 초기화 및 사용자 인증 설정
         async function initializeFirebase() {
             try {
                 const app = initializeApp(firebaseConfig);
@@ -369,12 +367,12 @@
             }
         }
         
-        // Listen for real-time updates from Firestore
+        // Firestore에서 실시간 업데이트를 수신
         function listenForBookings() {
             const bookingsCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
             
             onSnapshot(bookingsCollectionRef, (snapshot) => {
-                // Clear and re-initialize the schedule data based on all available slots
+                // 예약 데이터를 초기화하여 모든 슬롯을 'available' 상태로 설정
                 Object.keys(scheduleData).forEach(key => delete scheduleData[key]);
                 bookingDates.forEach(date => {
                     scheduleData[date] = {};
@@ -383,7 +381,7 @@
                     });
                 });
 
-                // Override the status with actual booked data from Firestore
+                // Firestore의 실제 예약 데이터로 상태를 덮어쓰기
                 snapshot.docs.forEach(doc => {
                     const booking = doc.data();
                     const { date, time } = booking;
@@ -392,14 +390,14 @@
                     }
                 });
                 
-                // Re-render the calendar to reflect the updated status
+                // 업데이트된 상태를 반영하여 캘린더를 다시 렌더링
                 renderCalendar();
             }, (error) => {
                 console.error("Error listening to bookings:", error);
             });
         }
         
-        // Render the calendar and time slots based on data
+        // 데이터에 따라 캘린더와 시간 슬롯을 렌더링
         function renderCalendar() {
             calendarGrid.innerHTML = '';
             
@@ -408,9 +406,10 @@
                 const day = d.getDate();
                 const weekDay = weekDays[d.getDay()];
 
-                // Check if any slots are available for this date
+                // 이 날짜에 사용 가능한 슬롯이 있는지 확인
                 let isAvailable = false;
                 if (scheduleData[dateISO]) {
+                    // 모든 시간 슬롯을 순회하며 'available' 상태가 하나라도 있는지 확인
                     isAvailable = Object.values(scheduleData[dateISO]).some(status => status === 'available');
                 }
                 
@@ -507,6 +506,7 @@
             const selectedDate = selectedDateBtn.dataset.date;
             const selectedTime = selectedTimeSlot.textContent.trim().split('\n')[0];
             
+            // Firestore 문서 ID를 날짜와 시간으로 고유하게 생성
             const bookingRef = doc(db, `artifacts/${appId}/public/data/bookings/${selectedDate}-${selectedTime.replace(':', '-')}`);
 
             const newBooking = {
@@ -576,7 +576,7 @@
             });
         });
 
-        // Initialize on page load
+        // 페이지 로드 시 Firebase 초기화
         initializeFirebase();
     </script>
 </body>
