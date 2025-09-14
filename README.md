@@ -25,6 +25,10 @@
                 padding: 2rem;
             }
         }
+        /* 링크 밑줄 제거 및 기본 폰트 색상 복원 */
+        a {
+            text-decoration: none;
+        }
         .text-primary { color: #5C3D2E; }
         .bg-primary { background-color: #5C3D2E; }
         .bg-card { background-color: #FFFFFF; }
@@ -310,16 +314,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const scheduleData = {
-                '2025-09-15': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-16': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-17': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-18': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-19': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-22': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-23': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-24': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-25': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-26': { '09:30': 'available', '11:00': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-15': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-16': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-17': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-18': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-19': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-22': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-23': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-24': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-25': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
+                '2025-09-26': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
             };
 
             const calendarGrid = document.getElementById('calendar-grid');
