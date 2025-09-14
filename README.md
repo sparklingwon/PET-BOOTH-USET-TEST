@@ -311,40 +311,109 @@
         </main>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const scheduleData = {
-                '2025-09-15': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-16': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-17': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-18': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-19': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-22': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-23': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-24': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-25': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-                '2025-09-26': { '10:00': 'available', '11:30': 'available', '14:00': 'available', '15:30': 'available' },
-            };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-            const calendarGrid = document.getElementById('calendar-grid');
-            const timeSlotsContainer = document.getElementById('time-slots-container');
-            const applicationFormContainer = document.getElementById('application-form-container');
-            const applicationForm = document.getElementById('application-form');
-            const selectedDatetimeDisplay = document.getElementById('selected-datetime');
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-            let selectedDateBtn = null;
-            let selectedTimeSlot = null;
-            const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+        let db;
+        let auth;
+        let userId;
 
-            // Iterate over the keys (dates) in the scheduleData object
-            Object.keys(scheduleData).forEach(dateISO => {
+        const scheduleData = {};
+        const availableTimeSlots = ['10:00', '11:30', '14:00', '15:30'];
+        const bookingDates = [
+            '2025-09-15', '2025-09-16', '2025-09-17', '2025-09-18', '2025-09-19',
+            '2025-09-22', '2025-09-23', '2025-09-24', '2025-09-25', '2025-09-26'
+        ];
+
+        const calendarGrid = document.getElementById('calendar-grid');
+        const timeSlotsContainer = document.getElementById('time-slots-container');
+        const applicationFormContainer = document.getElementById('application-form-container');
+        const applicationForm = document.getElementById('application-form');
+        const selectedDatetimeDisplay = document.getElementById('selected-datetime');
+
+        let selectedDateBtn = null;
+        let selectedTimeSlot = null;
+        const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+        // Initialize Firebase and set up authentication
+        async function initializeFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        listenForBookings();
+                        console.log(`User authenticated with ID: ${userId}`);
+                    } else {
+                        console.log("No user is authenticated.");
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase or authenticating:", error);
+            }
+        }
+        
+        // Listen for real-time updates from Firestore
+        function listenForBookings() {
+            const bookingsCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
+            
+            onSnapshot(bookingsCollectionRef, (snapshot) => {
+                // Clear and re-initialize the schedule data based on all available slots
+                Object.keys(scheduleData).forEach(key => delete scheduleData[key]);
+                bookingDates.forEach(date => {
+                    scheduleData[date] = {};
+                    availableTimeSlots.forEach(time => {
+                        scheduleData[date][time] = 'available';
+                    });
+                });
+
+                // Override the status with actual booked data from Firestore
+                snapshot.docs.forEach(doc => {
+                    const booking = doc.data();
+                    const { date, time } = booking;
+                    if (scheduleData[date] && scheduleData[date][time]) {
+                         scheduleData[date][time] = booking.status;
+                    }
+                });
+                
+                // Re-render the calendar to reflect the updated status
+                renderCalendar();
+            }, (error) => {
+                console.error("Error listening to bookings:", error);
+            });
+        }
+        
+        // Render the calendar and time slots based on data
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            
+            bookingDates.forEach(dateISO => {
                 const d = new Date(dateISO + 'T00:00:00');
                 const day = d.getDate();
                 const weekDay = weekDays[d.getDay()];
 
-                // Determine if any time slot is available for this date
-                const isAvailable = Object.values(scheduleData[dateISO]).some(status => status === 'available');
-
+                // Check if any slots are available for this date
+                let isAvailable = false;
+                if (scheduleData[dateISO]) {
+                    isAvailable = Object.values(scheduleData[dateISO]).some(status => status === 'available');
+                }
+                
                 const dateBtn = document.createElement('button');
                 dateBtn.classList.add('p-3', 'rounded-xl', 'date-btn-base', 'text-primary', 'font-semibold', 'flex', 'flex-col', 'items-center', 'justify-center', 'shadow-md');
                 dateBtn.innerHTML = `
@@ -366,7 +435,7 @@
                     }
                     dateBtn.classList.add('date-btn-selected');
                     selectedDateBtn = dateBtn;
-                    // Reset time slot selection and hide form
+                    
                     if (selectedTimeSlot) {
                         selectedTimeSlot.classList.remove('date-btn-selected');
                         selectedTimeSlot = null;
@@ -377,102 +446,138 @@
                 });
                 calendarGrid.appendChild(dateBtn);
             });
+        }
+        
+        function renderTimeSlots(date) {
+            const slots = scheduleData[date];
+            timeSlotsContainer.innerHTML = '';
             
-            function renderTimeSlots(date) {
-                const slots = scheduleData[date];
-                timeSlotsContainer.innerHTML = '';
-                
-                const header = document.createElement('h3');
-                header.className = 'text-xl font-bold mb-4 text-primary';
-                header.textContent = `${new Date(date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })} 예약 현황`;
-                timeSlotsContainer.appendChild(header);
+            const header = document.createElement('h3');
+            header.className = 'text-xl font-bold mb-4 text-primary';
+            header.textContent = `${new Date(date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })} 예약 현황`;
+            timeSlotsContainer.appendChild(header);
 
-                const slotsGrid = document.createElement('div');
-                slotsGrid.className = 'grid grid-cols-2 md:grid-cols-4 gap-4';
+            const slotsGrid = document.createElement('div');
+            slotsGrid.className = 'grid grid-cols-2 md:grid-cols-4 gap-4';
 
-                if (slots) {
-                    Object.entries(slots).forEach(([time, status]) => {
-                        const slotEl = document.createElement('div');
-                        const isAvailable = status === 'available';
-                        slotEl.classList.add('p-4', 'rounded-xl', 'text-center', 'font-semibold', 'text-primary', 'date-btn-base');
-                        if (isAvailable) {
-                            slotEl.classList.add('bg-white', 'shadow-md', 'cursor-pointer', 'time-slot-available');
-                            slotEl.addEventListener('click', () => {
-                                if (selectedTimeSlot) {
-                                    selectedTimeSlot.classList.remove('date-btn-selected');
-                                }
-                                slotEl.classList.add('date-btn-selected');
-                                selectedTimeSlot = slotEl;
-                                timeSlotsContainer.classList.add('hidden');
-                                applicationFormContainer.classList.remove('hidden');
-                                selectedDatetimeDisplay.textContent = `${new Date(date).toLocaleDateString('ko-KR')} ${time}`;
-                                document.getElementById('application-form').scrollIntoView({ behavior: 'smooth' });
-                            });
-                        } else {
-                            slotEl.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
-                        }
+            if (slots) {
+                Object.entries(slots).forEach(([time, status]) => {
+                    const slotEl = document.createElement('div');
+                    const isAvailable = status === 'available';
+                    slotEl.classList.add('p-4', 'rounded-xl', 'text-center', 'font-semibold', 'text-primary', 'date-btn-base');
+                    
+                    if (isAvailable) {
+                        slotEl.classList.add('bg-white', 'shadow-md', 'cursor-pointer', 'time-slot-available');
+                        slotEl.addEventListener('click', () => {
+                            if (selectedTimeSlot) {
+                                selectedTimeSlot.classList.remove('date-btn-selected');
+                            }
+                            slotEl.classList.add('date-btn-selected');
+                            selectedTimeSlot = slotEl;
+                            timeSlotsContainer.classList.add('hidden');
+                            applicationFormContainer.classList.remove('hidden');
+                            selectedDatetimeDisplay.textContent = `${new Date(date).toLocaleDateString('ko-KR')} ${time}`;
+                            document.getElementById('application-form').scrollIntoView({ behavior: 'smooth' });
+                        });
+                    } else {
+                        slotEl.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+                    }
 
-                        slotEl.innerHTML = `
-                            <p class="text-xl">${time}</p>
-                            <p class="text-sm">${isAvailable ? '예약 가능' : '마감'}</p>
-                        `;
-                        slotsGrid.appendChild(slotEl);
-                    });
-                }
-                
-                timeSlotsContainer.appendChild(slotsGrid);
+                    slotEl.innerHTML = `
+                        <p class="text-xl">${time}</p>
+                        <p class="text-sm">${isAvailable ? '예약 가능' : '마감'}</p>
+                    `;
+                    slotsGrid.appendChild(slotEl);
+                });
+            }
+            
+            timeSlotsContainer.appendChild(slotsGrid);
+        }
+
+        applicationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!selectedDateBtn || !selectedTimeSlot) {
+                console.error("Please select both a date and a time.");
+                return;
             }
 
-            applicationForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const formData = new FormData(applicationForm);
-                const data = Object.fromEntries(formData.entries());
+            const formData = new FormData(applicationForm);
+            const data = Object.fromEntries(formData.entries());
+            const selectedDate = selectedDateBtn.dataset.date;
+            const selectedTime = selectedTimeSlot.textContent.trim().split('\n')[0];
+            
+            const bookingRef = doc(db, `artifacts/${appId}/public/data/bookings/${selectedDate}-${selectedTime.replace(':', '-')}`);
 
+            const newBooking = {
+                date: selectedDate,
+                time: selectedTime,
+                guardianName: data.guardianName,
+                guardianContact: data.guardianContact,
+                petName: data.petName,
+                petAge: data.petAge,
+                petBreed: data.petBreed,
+                petGender: data.petGender,
+                status: 'booked',
+                bookedAt: new Date(),
+                userId: userId,
+            };
+
+            try {
+                await setDoc(bookingRef, newBooking);
+                
                 const confirmationMessage = `
                     참가 신청이 완료되었습니다. 감사합니다!
                     \n\n[신청 정보]
-                    날짜/시간: ${selectedDatetimeDisplay.textContent}
+                    날짜/시간: ${new Date(selectedDate).toLocaleDateString('ko-KR')} ${selectedTime}
                     보호자 성함: ${data.guardianName}
                     보호자 연락처: ${data.guardianContact}
                     반려동물 이름: ${data.petName}
                     반려동물 나이: ${data.petAge}
                     반려동물 품종: ${data.petBreed}
                     반려동물 성별: ${data.petGender}
+                    \n\n이 정보는 담당자 이메일 sparkling.won@furmunity.kr로 전송됩니다.
                 `;
                 
-                // Use a simple modal or message box instead of alert()
                 const messageBox = document.createElement('div');
                 messageBox.innerHTML = `
                     <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:100;">
                         <div style="background:#fff;padding:2rem;border-radius:1rem;max-width:90%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
                             <h3 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;color:#5C3D2E;">신청 완료!</h3>
                             <p style="white-space:pre-wrap;text-align:left;line-height:1.6;font-size:1rem;color:#555;">${confirmationMessage}</p>
-                            <button onclick="this.parentNode.parentNode.remove()" style="margin-top:1.5rem;padding:0.75rem 2rem;background:#FF7F50;color:white;border-radius:9999px;font-weight:bold;">확인</button>
+                            <button onclick="window.location.reload()" style="margin-top:1.5rem;padding:0.75rem 2rem;background:#FF7F50;color:white;border-radius:9999px;font-weight:bold;">확인</button>
                         </div>
                     </div>
                 `;
                 document.body.appendChild(messageBox);
                 
-                applicationForm.reset();
-                selectedDateBtn.classList.remove('date-btn-selected');
-                selectedTimeSlot.classList.remove('date-btn-selected');
-                selectedDateBtn = null;
-                selectedTimeSlot = null;
-                applicationFormContainer.classList.add('hidden');
-                timeSlotsContainer.classList.remove('hidden');
-
-            });
-            
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                const messageBox = document.createElement('div');
+                messageBox.innerHTML = `
+                    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:100;">
+                        <div style="background:#fff;padding:2rem;border-radius:1rem;max-width:90%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+                            <h3 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;color:#FF0000;">오류 발생!</h3>
+                            <p style="white-space:pre-wrap;text-align:left;line-height:1.6;font-size:1rem;color:#555;">신청 중 오류가 발생했습니다. 다시 시도해 주세요.</p>
+                            <button onclick="this.parentNode.parentNode.remove()" style="margin-top:1.5rem;padding:0.75rem 2rem;background:#FF7F50;color:white;border-radius:9999px;font-weight:bold;">확인</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+            }
+        });
+        
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
                 });
             });
         });
+
+        // Initialize on page load
+        initializeFirebase();
     </script>
 </body>
 </html>
