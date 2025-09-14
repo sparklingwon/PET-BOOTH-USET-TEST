@@ -1,23 +1,29 @@
-# PET-BOOTH-USET-TEST
-
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PET BOOTH 사용자 테스트 참가자 모집</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Sunset (Vibrant orange, soft peach, deep cocoa brown) -->
-    <!-- Application Structure Plan: A dynamic, card-based single-page application. The hero section is more visually striking. Content is organized into distinct, visually separated cards for Intro, Schedule, Benefits, and Details, allowing for non-linear exploration. The schedule is the central interactive element, with a bold calendar and a dynamic time slot display that changes with user clicks. This structure feels more like a modern, engaging app than a static document, prioritizing visual hierarchy and user-driven discovery. -->
-    <!-- Visualization & Content Choices: The core interactive visualization is the dynamic calendar/schedule. Report Info: Event dates/times, availability. Goal: Engage, inform, and guide action. Method: A prominent calendar grid with hover effects and a clearly styled selected state. User clicks a date, and a separate section dynamically renders available time slots. Justification: This design moves beyond simple presentation to active user engagement, making the core task (finding a time slot) interactive and fun. All other content is presented in visually distinct, icon-driven cards to maintain high readability and a clean, modern aesthetic. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #FDF4E7;
             color: #5C3D2E;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+        }
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
         }
         .text-primary { color: #5C3D2E; }
         .bg-primary { background-color: #5C3D2E; }
@@ -49,10 +55,104 @@
             color: #5C3D2E;
             margin-bottom: 1rem;
         }
+        .rounded-full { border-radius: 9999px; }
+        .rounded-3xl { border-radius: 1.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .p-4 { padding: 1rem; }
+        .py-20 { padding-top: 5rem; padding-bottom: 5rem; }
+        .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
+        .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+        .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+        .px-12 { padding-left: 3rem; padding-right: 3rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .p-8 { padding: 2rem; }
+        .p-6 { padding: 1.5rem; }
+        .mb-16 { margin-bottom: 4rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-8 { margin-top: 2rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mb-10 { margin-bottom: 2.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .space-y-16 > :not([hidden]) ~ :not([hidden]) { margin-top: 4rem; }
+        .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+        .space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: 1rem; }
+        .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 2rem; }
+        .text-center { text-align: center; }
+        .font-black { font-weight: 900; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .text-5xl { font-size: 3rem; line-height: 1; }
+        .text-6xl { font-size: 3.75rem; line-height: 1; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+        .max-w-5xl { max-width: 64rem; }
+        .max-w-2xl { max-width: 42rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .relative { position: relative; }
+        .overflow-hidden { overflow: hidden; }
+        .absolute { position: absolute; }
+        .bottom-0 { bottom: 0; }
+        .right-0 { right: 0; }
+        .opacity-10 { opacity: 0.1; }
+        .leading-tight { line-height: 1.25; }
+        .inline-block { display: inline-block; }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .duration-300 { transition-duration: 300ms; }
+        .grid { display: grid; }
+        .gap-10 { gap: 2.5rem; }
+        .gap-8 { gap: 2rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-3 { gap: 0.75rem; }
+        .grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        @media (min-width: 768px) {
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .md\:py-24 { padding-top: 6rem; padding-bottom: 6rem; }
+            .md\:text-6xl { font-size: 3.75rem; line-height: 1; }
+            .md\:text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+            .md\:text-base { font-size: 1rem; line-height: 1.5rem; }
+            .md\:text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .border-2 { border-width: 2px; }
+        .border-dashed { border-style: dashed; }
+        .border-gray-200 { border-color: #E5E7EB; }
+        .border-gray-300 { border-color: #D1D5DB; }
+        .cursor-pointer { cursor: pointer; }
+        .cursor-not-allowed { cursor: not-allowed; }
+        .hidden { display: none; }
+        .text-left { text-align: left; }
+        .w-full { width: 100%; }
+        .text-gray-600 { color: #4B5563; }
+        .text-gray-500 { color: #6B7280; }
+        .text-gray-400 { color: #9CA3AF; }
+        .hover\:bg-orange-600:hover { background-color: #EA580C; }
+        .min-h-screen { min-height: 100vh; }
+        .flex-col { flex-direction: column; }
+        .justify-between { justify-content: space-between; }
     </style>
 </head>
 <body>
-    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+    <div class="container p-4 md:p-8 max-w-5xl">
         <header class="text-center py-20 md:py-24 hero-bg rounded-3xl shadow-2xl p-8 mb-16 relative overflow-hidden">
             <h1 class="text-5xl md:text-6xl font-black mb-4 leading-tight">
                 <span class="accent-text">세상에서 가장 특별한 순간,</span><br>우리 아이 발자국을 남겨보세요!
