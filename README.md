@@ -13,6 +13,7 @@
             color: #5C3D2E;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
         .container {
             max-width: 1280px;
@@ -25,7 +26,6 @@
                 padding: 2rem;
             }
         }
-        /* 링크 밑줄 제거 및 기본 폰트 색상 복원 */
         a {
             text-decoration: none;
         }
@@ -146,6 +146,7 @@
         .hidden { display: none; }
         .text-left { text-align: left; }
         .w-full { width: 100%; }
+        .h-full { height: 100%; }
         .text-gray-600 { color: #4B5563; }
         .text-gray-500 { color: #6B7280; }
         .text-gray-400 { color: #9CA3AF; }
@@ -296,7 +297,7 @@
             </section>
 
             <!-- Brand Story Footer -->
-            <footer id="brand-story" class="text-center py-12 hero-bg rounded-3xl shadow-inner">
+            <footer id="brand-story" class="text-center py-8 hero-bg rounded-3xl shadow-lg">
                 <img src="https://placehold.co/1500x800/FFDAB9/5C3D2E?text=Happy+Pets" alt="반려동물 이미지" class="mx-auto mb-4 w-full h-auto rounded-xl">
                 <h2 class="text-4xl font-black mb-4 text-primary">
                     반려동물과 함께 만드는, 더 나은 내일
@@ -309,19 +310,9 @@
         </main>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // 환경 변수에서 제공되는 전역 변수들
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db;
-        let auth;
-        let userId;
+    <script>
+        // Firebase 관련 라이브러리 및 코드 제거
+        // 이제 이 스크립트는 순수 JavaScript로만 작동합니다.
 
         const scheduleData = {};
         const availableTimeSlots = ['10:00', '11:30', '14:00', '15:30'];
@@ -340,64 +331,21 @@
         let selectedTimeSlot = null;
         const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-        // Firebase 초기화 및 사용자 인증 설정
-        async function initializeFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        listenForBookings();
-                        console.log(`User authenticated with ID: ${userId}`);
-                    } else {
-                        console.log("No user is authenticated.");
-                    }
+        // 예약 데이터를 하드코딩으로 초기화
+        function initializeScheduleData() {
+            bookingDates.forEach(date => {
+                scheduleData[date] = {};
+                availableTimeSlots.forEach(time => {
+                    scheduleData[date][time] = 'available';
                 });
-            } catch (error) {
-                console.error("Error initializing Firebase or authenticating:", error);
-            }
-        }
-        
-        // Firestore에서 실시간 업데이트를 수신
-        function listenForBookings() {
-            const bookingsCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
-            
-            onSnapshot(bookingsCollectionRef, (snapshot) => {
-                // 예약 데이터를 초기화하여 모든 슬롯을 'available' 상태로 설정
-                Object.keys(scheduleData).forEach(key => delete scheduleData[key]);
-                bookingDates.forEach(date => {
-                    scheduleData[date] = {};
-                    availableTimeSlots.forEach(time => {
-                        scheduleData[date][time] = 'available';
-                    });
-                });
-
-                // Firestore의 실제 예약 데이터로 상태를 덮어쓰기
-                snapshot.docs.forEach(doc => {
-                    const booking = doc.data();
-                    const { date, time } = booking;
-                    if (scheduleData[date] && scheduleData[date][time]) {
-                         scheduleData[date][time] = booking.status;
-                    }
-                });
-                
-                // 업데이트된 상태를 반영하여 캘린더를 다시 렌더링
-                renderCalendar();
-            }, (error) => {
-                console.error("Error listening to bookings:", error);
             });
+            // 특정 날짜/시간을 'booked' 상태로 설정하여 테스트
+            scheduleData['2025-09-15']['10:00'] = 'booked';
+            scheduleData['2025-09-18']['14:00'] = 'booked';
+            scheduleData['2025-09-22']['11:30'] = 'booked';
         }
         
-        // 데이터에 따라 캘린더와 시간 슬롯을 렌더링
+        // 캘린더를 렌더링하는 함수
         function renderCalendar() {
             calendarGrid.innerHTML = '';
             
@@ -406,10 +354,8 @@
                 const day = d.getDate();
                 const weekDay = weekDays[d.getDay()];
 
-                // 이 날짜에 사용 가능한 슬롯이 있는지 확인
                 let isAvailable = false;
                 if (scheduleData[dateISO]) {
-                    // 모든 시간 슬롯을 순회하며 'available' 상태가 하나라도 있는지 확인
                     isAvailable = Object.values(scheduleData[dateISO]).some(status => status === 'available');
                 }
                 
@@ -447,6 +393,7 @@
             });
         }
         
+        // 시간 슬롯을 렌더링하는 함수
         function renderTimeSlots(date) {
             const slots = scheduleData[date];
             timeSlotsContainer.innerHTML = '';
@@ -493,7 +440,8 @@
             timeSlotsContainer.appendChild(slotsGrid);
         }
 
-        applicationForm.addEventListener('submit', async (e) => {
+        // 폼 제출 이벤트 핸들러
+        applicationForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
             if (!selectedDateBtn || !selectedTimeSlot) {
@@ -506,67 +454,33 @@
             const selectedDate = selectedDateBtn.dataset.date;
             const selectedTime = selectedTimeSlot.textContent.trim().split('\n')[0];
             
-            // Firestore 문서 ID를 날짜와 시간으로 고유하게 생성
-            const bookingRef = doc(db, `artifacts/${appId}/public/data/bookings/${selectedDate}-${selectedTime.replace(':', '-')}`);
-
-            const newBooking = {
-                date: selectedDate,
-                time: selectedTime,
-                guardianName: data.guardianName,
-                guardianContact: data.guardianContact,
-                petName: data.petName,
-                petAge: data.petAge,
-                petBreed: data.petBreed,
-                petGender: data.petGender,
-                status: 'booked',
-                bookedAt: new Date(),
-                userId: userId,
-            };
-
-            try {
-                await setDoc(bookingRef, newBooking);
-                
-                const confirmationMessage = `
-                    참가 신청이 완료되었습니다. 감사합니다!
-                    \n\n[신청 정보]
-                    날짜/시간: ${new Date(selectedDate).toLocaleDateString('ko-KR')} ${selectedTime}
-                    보호자 성함: ${data.guardianName}
-                    보호자 연락처: ${data.guardianContact}
-                    반려동물 이름: ${data.petName}
-                    반려동물 나이: ${data.petAge}
-                    반려동물 품종: ${data.petBreed}
-                    반려동물 성별: ${data.petGender}
-                    \n\n이 정보는 담당자 이메일 sparkling.won@furmunity.kr로 전송됩니다.
-                `;
-                
-                const messageBox = document.createElement('div');
-                messageBox.innerHTML = `
-                    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:100;">
-                        <div style="background:#fff;padding:2rem;border-radius:1rem;max-width:90%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-                            <h3 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;color:#5C3D2E;">신청 완료!</h3>
-                            <p style="white-space:pre-wrap;text-align:left;line-height:1.6;font-size:1rem;color:#555;">${confirmationMessage}</p>
-                            <button onclick="window.location.reload()" style="margin-top:1.5rem;padding:0.75rem 2rem;background:#FF7F50;color:white;border-radius:9999px;font-weight:bold;">확인</button>
-                        </div>
+            // 데이터베이스 저장 로직을 제거하고, 단순히 성공 메시지만 표시
+            const confirmationMessage = `
+                참가 신청이 완료되었습니다. 감사합니다!
+                \n\n[신청 정보]
+                날짜/시간: ${new Date(selectedDate).toLocaleDateString('ko-KR')} ${selectedTime}
+                보호자 성함: ${data.guardianName}
+                보호자 연락처: ${data.guardianContact}
+                반려동물 이름: ${data.petName}
+                반려동물 나이: ${data.petAge}
+                반려동물 품종: ${data.petBreed}
+                반려동물 성별: ${data.petGender}
+            `;
+            
+            const messageBox = document.createElement('div');
+            messageBox.innerHTML = `
+                <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:100;">
+                    <div style="background:#fff;padding:2rem;border-radius:1rem;max-width:90%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+                        <h3 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;color:#5C3D2E;">신청 완료!</h3>
+                        <p style="white-space:pre-wrap;text-align:left;line-height:1.6;font-size:1rem;color:#555;">${confirmationMessage}</p>
+                        <button onclick="window.location.reload()" style="margin-top:1.5rem;padding:0.75rem 2rem;background:#FF7F50;color:white;border-radius:9999px;font-weight:bold;">확인</button>
                     </div>
-                `;
-                document.body.appendChild(messageBox);
-                
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                const messageBox = document.createElement('div');
-                messageBox.innerHTML = `
-                    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:100;">
-                        <div style="background:#fff;padding:2rem;border-radius:1rem;max-width:90%;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-                            <h3 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;color:#FF0000;">오류 발생!</h3>
-                            <p style="white-space:pre-wrap;text-align:left;line-height:1.6;font-size:1rem;color:#555;">신청 중 오류가 발생했습니다. 다시 시도해 주세요.</p>
-                            <button onclick="this.parentNode.parentNode.remove()" style="margin-top:1.5rem;padding:0.75rem 2rem;background:#FF7F50;color:white;border-radius:9999px;font-weight:bold;">확인</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(messageBox);
-            }
+                </div>
+            `;
+            document.body.appendChild(messageBox);
         });
         
+        // 스무스 스크롤링 기능
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -576,8 +490,9 @@
             });
         });
 
-        // 페이지 로드 시 Firebase 초기화
-        initializeFirebase();
+        // 초기화 함수 실행
+        initializeScheduleData();
+        renderCalendar();
     </script>
 </body>
 </html>
